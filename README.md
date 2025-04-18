@@ -111,4 +111,5 @@ This analysis helps new graduates make informed decisions about where to live an
 ## 🔗 References
 - [Utah Workforce Data](https://jobs.utah.gov/)
 - [BLS OEWS Data](https://www.bls.gov/oes/)
+- [Full Analysis Can be Viewed Here](https://github.com/Tyler-Johnston/Utah-Programmer-Job-Market-Analysis/blob/main/analysis/Utah%20Programmer%20Job%20Market%20Analysis.pdf)
 - The munged data and CSVs we used are included in the project repository
