@@ -1,117 +1,112 @@
 # Utah Programmer Job Market Analysis
 
-## Project Overview
+An exploratory data project about where a programmer in Utah could find the best balance of pay, living costs, and job opportunity. It combines 2024 wage and employment-projection data with county-level household budgets to answer a practical question: **where does a programmer's pay go furthest?**
 
-This project analyzes programmer wage data and cost of living across Utah counties to identify the most affordable locations for recent computer science graduates. By combining wage data with local cost-of-living indices, we built an Affordability Index to highlight where programmers can get the most value from their income.
+This refresh keeps the original project question and source files, while making the calculations reproducible, the charts easier to read, and the conclusions more explicit about what the data can and cannot support.
 
----
+## Highlights
 
-## Goals
+- **Beaver County** has the highest average annual median wage across the six analyzed programmer roles: **$90,910**. Weber and Salt Lake counties follow at roughly **$87,000**.
+- Under the stated one-adult/no-children cost baseline, **Software Developers in Carbon County** have the strongest affordability result: a **$104,020** annual median wage against **$40,152** in annual baseline costs, or **2.59×**.
+- **Salt Lake County** has the largest projected increase among the detailed computer occupations represented in the wage data: **6,478** new jobs. Utah County follows with **3,008**.
+- The county-and-role salary baseline explains some, but not all, wage variation. Five-fold cross-validation produces an RMSE of **$13,455** and R² of **0.41** across 36 wage observations, so it should be read as an explanatory baseline rather than a salary forecast.
 
-- Compare programmer wages across Utah counties
-- Merge cost of living and salary data to determine affordability
-- Visualize wage trends by job type and location
-- Build a linear regression model to predict wage based on county and job title
+## Findings
 
----
+### Pay by location
 
-## Data Preparation
+![Ranked average annual median pay by county. Beaver County leads at $90,910, while Cache County is lowest at $69,388.](figures/median_salary_by_county.png)
 
-- Cleaned and joined datasets using Pandas
-- Merged cost of living and salary datasets via normalized county names
-- Removed rows with missing wage data
-- One-hot encoded job titles and county names for modeling
+The chart averages the available annual median wages for six programmer-related roles within each workforce area. It is useful for comparing the source's reporting areas, not for estimating every programmer's individual offer.
 
----
+### Pay by role
 
-## Tools and Libraries
+![Ranked average annual median pay by role. Software Developers lead the group and Web Developers are lowest.](figures/median_salary_by_role.png)
 
-- Python
-- Pandas
-- NumPy
-- scikit-learn (LinearRegression, ColumnTransformer, OneHotEncoder)
-- Matplotlib and Seaborn
+Software Developers lead the analyzed roles at an average annual median wage of **$101,461**. Web Developers average **$60,238**. These are descriptive source-data comparisons; the project does not make causal claims about why the difference exists.
 
----
+### Affordability by role and county
 
-## Affordability Index
+![Best and worst wage-to-cost ratios for programmer roles and counties, using one adult with no children as the household baseline.](figures/affordability_by_job_and_county.png)
 
-A custom metric combining average annual wage and cost of living index per county:
+Affordability is calculated as:
 
-```
-Affordability Index = (Average Annual Wage) / (Cost of Living Index)
+```text
+Annual median wage / annual cost of living
 ```
 
-Counties with a higher Affordability Index are more favorable for programmers.
+For the headline view, annual cost of living is always the 2024 county budget for **one adult with no children (`1p0c`)**. A value above 1 means that annual wage exceeds that household's annual baseline budget. This is a comparison metric, not a complete personal budget: taxes, commuting, housing choices, debt, benefits, and household circumstances can materially change the result.
 
----
+### Projected opportunity
 
-## Key Findings
+![Projected new detailed computer-occupation jobs by county, with Salt Lake County leading.](figures/new_jobs_by_county.png)
 
-![Location and Salary Comparison](figures/locations_salary.png)
-![Position and Salary Comparison](figures/positions_salary.png)
-![Affordability Index](figures/affordability_index.png)
-![Fastest and Slowest Job Growth](figures/fastest_and_slowst_job_growth.png)
+![Five fastest and five slowest projected growth rates among the detailed occupations represented in the wage source.](figures/job_growth_extremes.png)
 
-## T-Test Comparisons: Job Category Salary Differences
+The opportunity charts use only detailed projection rows that match an occupation in the wage source. This deliberately excludes broader roll-up categories so a category is not counted once on its own and again through its components.
 
-To determine whether salary differences between job categories were statistically significant, we ran pairwise two-sample t-tests, reporting both the t-statistic and p-value for each comparison.
+### Salary baseline check
 
----
+![Out-of-fold salary predictions plotted against observed annual median wages, with a perfect-prediction diagonal.](figures/model_cross_validated_predictions.png)
 
-### Least Significant Differences
+The model uses only two inputs—workforce county and job title—then evaluates its predictions on held-out folds. It is included to show how much of the observed salary variation those two fields capture, not as a production recommendation engine.
 
-These comparisons showed no statistically significant salary difference (p > 0.05):
+## Method
 
-| Comparison | T-Statistic | P-Value |
-|------------|-------------|---------|
-| Computer Systems Analysts vs. Network & Computer Systems Administrators | 0.269 | 0.788 |
-| Computer Programmers vs. Network & Computer Systems Administrators | 0.699 | 0.486 |
-| QA Analysts & Testers vs. Web Developers | 1.125 | 0.263 |
+1. Load the consolidated 2024 wage data and exclude statewide and national totals.
+2. Map each workforce reporting area to the county used in the cost-of-living data.
+3. Join each wage observation to exactly one county cost record for the selected household baseline.
+4. Calculate wage-to-cost affordability ratios.
+5. Join detailed occupation projections to the raw wage occupation list before aggregating projected new jobs.
+6. Evaluate a county-and-role linear-regression baseline using five-fold cross-validation.
 
-These roles appear to be compensated similarly within the Utah job market.
+The project intentionally no longer reports the former pairwise t-test table. That analysis tested affordability ratios rather than the salary differences described in the prior README, and repeated comparisons would require a more careful statistical design and correction for multiple testing.
 
----
+## Project structure
 
-### Most Significant Differences
+```text
+.
+├── src/utah_job_market/
+│   ├── data.py        # Source loading, validation, and area-to-county mapping
+│   ├── analysis.py    # Affordability and cross-validated model calculations
+│   └── visuals.py     # Shared styling and chart generation
+├── scripts/run_analysis.py
+├── tests/test_analysis.py
+├── figures/           # Regenerated charts used in this README
+├── project.ipynb      # Original exploratory notebook, retained for project history
+└── *.xlsx / *.csv     # Original local source data
+```
 
-These comparisons showed strong, statistically significant salary differences (p < 0.001):
+## Run it
 
-| Comparison | T-Statistic | P-Value |
-|------------|-------------|---------|
-| Software Developers vs. Web Developers | 7.095 | 7.86 x 10^-11 |
-| Software Developers vs. QA Analysts & Testers | 5.603 | 1.40 x 10^-7 |
-| Computer Programmers vs. Web Developers | 4.612 | 1.02 x 10^-5 |
+The source workbooks are included, so a network connection is not required after installing the Python dependencies.
 
-These results point to meaningful wage disparities between roles, with Software Developers consistently earning the most.
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python scripts/run_analysis.py
+PYTHONPATH=src python -m unittest discover -s tests -v
+```
 
----
+The analysis command regenerates the six README charts in `figures/`. It validates the required columns, fails on unmapped workforce areas, and checks that every salary observation has one—and only one—matching baseline cost record.
 
-## Future Work
+## Data and scope
 
-Future iterations of this project could explore:
+| Source file | Used for | Vintage / limitation |
+|---|---|---|
+| `wages.xlsx` | Six-role wage comparisons and salary baseline | Local 2024 project source; some role-area wage values are missing. |
+| `fbc_data_2024.xlsx` | County household cost baseline | 2024 Family Budget Calculator-style county budgets; results change with household type. |
+| `Wage.xlsx` + `projection.xlsx` | Detailed occupation growth and new-job totals | Local projection extracts; interpreted as projections, not realized employment. |
 
-- Predictive salary modeling based on skills, location, and cost of living
-- Skill impact analysis to identify which technologies and certifications correlate with higher pay
-- Demand forecasting using public labor data to find high-growth roles
-- An interactive dashboard for personalized job market insights
+The analysis covers the workforce areas available in the supplied files: Cache, Beaver, Carbon, Weber, Utah, Salt Lake, and Washington counties. Metro reporting areas are mapped to a single county solely to align the two source formats, which is a simplifying assumption.
 
-These additions would make the analysis more actionable for job seekers and students planning their careers.
+## Original deliverables
 
----
+The original presentation and paper remain available in [`analysis/`](analysis/). The earlier notebook charts are retained in `figures/` for historical reference; the six charts embedded above are the refreshed, reproducible set.
 
-## Conclusions
+## Sources
 
-This analysis is meant to help new graduates make informed decisions about where to live and work, and it surfaces some systemic wage disparities between job roles as well as counties where living costs are disproportionate to salary expectations.
-
-- Carbon and Beaver Counties pay reasonably well but are growing slowly; Salt Lake and Utah County may offer an easier job search overall.
-- Software Developers and Computer Programmers earn the most, while QA Analysts & Testers and Web Developers earn the least.
-
----
-
-## References
-
-- [Utah Workforce Data](https://jobs.utah.gov/)
-- [BLS OEWS Data](https://www.bls.gov/oes/)
-- [Full Analysis](https://github.com/Tyler-Johnston/Utah-Programmer-Job-Market-Analysis/blob/main/analysis/Utah%20Programmer%20Job%20Market%20Analysis.pdf)
-- The munged data and CSVs used are included in the project repository
+- [Utah Department of Workforce Services](https://jobs.utah.gov/)
+- [U.S. Bureau of Labor Statistics, Occupational Employment and Wage Statistics](https://www.bls.gov/oes/)
+- [Original project paper](analysis/Utah%20Programmer%20Job%20Market%20Analysis.pdf)
